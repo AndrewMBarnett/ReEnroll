@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script returns the ReEnroll status from the ReEnroll file created
+# Make sure to set the Extension Attribute Data Type to "String".
+# https://github.com/AndrewMBarnett/ReEnroll
+# by Andrew Barnett (@andrewmbarnett)
+# 09.16.2024
+
+ReEnrollFile="/usr/local/TS/receipts/reEnrollComputer.txt"
+
+if [ -f "$ReEnrollFile" ]; then
+	ReEnrollResults=$(sed -n '1p' /usr/local/TS/receipts/reEnrollComputer.txt)
+    [[ -n "$ReEnrollResults" ]] && echo "<result>${ReEnrollResults}</result>"
+    [[ -z "$ReEnrollResults" ]] && echo "<result>No ReEnroll Results found.</result>"
+else
+    echo "<result>No ReEnroll file.</result>"
+fi
