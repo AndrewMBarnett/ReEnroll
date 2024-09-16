@@ -3,7 +3,8 @@
 If you want to re-enroll the device and not have specific configuration profiles or policies run again after enrollment. You can add the Device ReEnroll Status Extension attribute and make a smart group to exclude from the configuration profiles and policies you do not run after enrollment.
 
 
-<img width="712" alt="HealthCheck-StartUp" src="https://github.com/AndrewMBarnett/ReEnroll/blob/main/Extras/Images/DeviceReEnrollStatus.png">
+[!image](https://github.com/AndrewMBarnett/ReEnroll/blob/main/Extras/Images/DeviceReEnrollStatus.png)
+
 - Device ReEnroll With Notification
 
 The extension attribute ( Device ReEnroll Notification Status ) can show if the script ran Profiles Renew command on the computer. This would be useful if you wanted the script to run silently but know if the Profiles Renew dialog window ran or not. The Profiles Renew dialog requires end user interaction to continue, unless they let the timer expire.
