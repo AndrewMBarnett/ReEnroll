@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script returns the ReEnroll status from the ReEnroll file created
+# This script returns the version of ReEnroll script
 # Make sure to set the Extension Attribute Data Type to "String".
 # https://github.com/AndrewMBarnett/ReEnroll
 # by Andrew Barnett (@andrewmbarnett)
@@ -13,9 +13,9 @@ folder_path="/Library/Application Support/ReEnroll"
 ReEnrollFile="$folder_path/ReEnroll"
 
 if [ -f "${ReEnrollFile}.plist" ]; then
-    ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" DeviceEnrolledStatus | sed 's/.\{20\}$//' 2> /dev/null)
+    ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" ReEnrollVersion 2> /dev/null)
     [[ -n "${ReEnrollEnrolledResults}" ]] && echo "<result>${ReEnrollEnrolledResults}</result>"
-    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No last discovery</result>"
+    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No ReEnroll version number found</result>"
 else
     echo "<result>No ReEnroll Property List file</result>"
 fi

@@ -1,23 +1,21 @@
-#!/bin/bash
-
-# shellcheck disable=SC2034,SC2317
+#!/bin/zsh --no-rcs
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Script Information
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Script Version
-scriptVersion="1.0"
+scriptVersion="1.1"
 # Script Name
 scriptName="ReEnroll"
-# Log file for script
-scriptLog="/var/log/ReEnrollComputers.log"
 # Temporary inventory log to read
 tempInventoryLog="/var/log/tempInventory.log"
 # Set the custom folder path for the receipt file
-folder_path="/usr/local/reenroll/receipts"
+folder_path="/Library/Application Support/ReEnroll"
+# Log file for script
+scriptLog="$folder_path/ReEnroll.log"
 # Receipt Path for Extension attribute
-receipt_path="/usr/local/reenroll/receipts/reEnrollComputer.txt"
+reEnrollConfigFile="$folder_path/ReEnroll.plist"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # API Inormation
@@ -254,6 +252,15 @@ if [[ ! -f "${scriptLog}" ]]; then
 else
     preFlight "Specified scriptLog exists; writing log entries to it"
 fi
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Path Related Functions
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+function makePath() {
+    mkdir -p "$(sed 's/\(.*\)\/.*/\1/' <<< $1)"
+    notice "Path made: $1"
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Validate / Create Temp DialogLog File
@@ -851,15 +858,44 @@ esac
 # Create Folder Path
 function folderPath() {
 
-    if [[ -f "${folder_path}" ]]; then
-        infoOut "Specified folder path exists"
-    elif [[ ! -f "${folder_path}" ]]; then
+    if [[ -d "${folder_path}" ]]; then
+        infoOut "Specified ${folder_path} path exists"
+    else [[ ! -d "${folder_path}" ]]
         infoOut "Created specified folder path"
-        mkdir -p ${folder_path}
-    else
-        infoOut "Specified folder path exists; writing log entries to it"
+        mkdir "${folder_path}"
+    fi
+}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Create Property List
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Create Property List
+function propertyList() {
+
+    if [[ -f "${reEnrollConfigFile}" ]]; then
+        infoOut "Specified ${reEnrollConfigFile} path exists"
+    else [[ ! -f "${reEnrollConfigFile}" ]]
+        infoOut "Created specified folder path"
+        touch "${reEnrollConfigFile}"
     fi
 
+    # PLIST creation and population
+    infoOut "Checking for $reEnrollConfigFile"
+
+    if [[ ! -f $reEnrollConfigFile ]]; then
+        notice "ReEnroll configuration profile does not exist, creating now..."
+        timestamp="$(date +"%Y-%m-%d %l:%M:%S +0000")"
+        defaults write $reEnrollConfigFile ReEnrollVersion -string "$scriptVersion"
+        defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
+        defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
+    else
+        notice "ReEnroll configuration already exists, continuing..."
+        timestamp="$(date +"%Y-%m-%d %l:%M:%S +0000")"
+        defaults write $reEnrollConfigFile ReEnrollVersion -string "$scriptVersion"
+        defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
+    fi
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1043,7 +1079,8 @@ while read -r user; do
 function enrollDeviceReceipt() {
 
     infoOut "Adding device enrolled receipt"
-    echo "Enrolled Device" > "$receipt_path"
+    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus -string "Enrolled Device"
+
 
 }
 
@@ -1507,7 +1544,7 @@ function inventoryError() {
         notice "ReEnroll did not call for 'Profiles Renew' dialog"
     fi
     notice "Sending Profiles Renew Command, deleting LAPS account, and sending notification"
-    echo "ReEnroll with notification" >> $receipt_path
+    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
     webhookStatus="ReEnroll with notification"
     reEnrollMethod="Notification for Renewing Enrollment"
         if [[ "${osMajorVersion}" -ge 12 ]] && [[ -e "/Library/Application Support/Dialog/Dialog.app" ]]; then
@@ -1526,7 +1563,7 @@ function inventoryError() {
 
                 0)  ## Process exit code 0 scenario here
                     notice "${loggedInUser} clicked Update Now;"
-                    echo "Update Now" >> $receipt_path
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Update Now"
                     infoOut "Checking user admin status to renew profiles"
                         addAdmin
                         sleep 5
@@ -1552,50 +1589,52 @@ function inventoryError() {
 
                 3)  ## Process exit code 2 scenario here
                     notice "${loggedInUser} clicked Not Now;"
-                    echo "Not Now" >> $receipt_path
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Not Now"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold, statustext: Deferring Update, status: nothing"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer Chose: Not Now"
-                    rm -rf /usr/local/TS/receipts/reEnrollComputer.txt
+                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 4)  ## Process exit code 4 scenario here
                     notice "${loggedInUser} allowed timer to expire;"
-                    echo "Allowed timer to expire" >> $receipt_path
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Allowed timer to expire"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer allowed timer to expire"
-                    rm -rf /usr/local/TS/receipts/reEnrollComputer.txt
+                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 20) ## Process exit code 20 scenario here
                     notice "${loggedInUser} had Do Not Disturb enabled"
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Do Not Disturb enabled"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer had Do Not Disturb enabled"
-                    rm -rf /usr/local/TS/receipts/reEnrollComputer.txt
+                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 *)  ## Catch all processing
                     notice "Something else happened; Exit code: ${returncode};"
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Error: Something else happened"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Something went wrong, policy will run at next execution"
-                    rm -rf /usr/local/TS/receipts/reEnrollComputer.txt
+                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
                     quitScript "${returncode}"
                     ;;
 
             esac
         else
             infoOut "Sending osascript notification for updating profiles"
-            echo "ReEnroll with notification" >> $receipt_path
+            defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
             infoOut "Sending Profiles Renew Enrollment Command"
             triggerEnrollment
             webhookStatus="ReEnroll with notification (S/N ${serialNumber})"
@@ -1920,8 +1959,7 @@ function checkLAPSAccountStatus() {
     infoOut "LAPS account and password are valid"
     updateDialog "listitem: title: LAPS Admin Check, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Valid Credentials, status: success"
     updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Invitation Sent, status: success"
-    #scriptResult+="LAPS account and password are valid; "
-    echo "ReEnroll without notification" >> $receipt_path
+    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
     webhookStatus="ReEnroll without notification"
     
     # Only update reEnrollMethod if it hasn't been set already
@@ -1944,7 +1982,7 @@ function checkLAPSAccountStatus() {
     updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.xmark,weight=bold, statustext: Invalid Credentials …, status: fail"
     error "LAPS account and password could not be validated"
     infoOut "Sending Profiles Renew Command"
-    echo "ReEnroll with notification" >> $receipt_path
+    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
     webhookStatus="ReEnroll with notification"
     # Sending renew profiles dialog
     inventoryError
@@ -2237,6 +2275,9 @@ fi
 
 # Create Folder Paths if they don't exist
 folderPath
+
+# Create Property List if it doesn't exist
+propertyList
 
 # Find Users and Remove
 findUsersandRemove

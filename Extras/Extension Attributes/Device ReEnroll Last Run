@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script returns the ReEnroll status from the ReEnroll file created
-# Make sure to set the Extension Attribute Data Type to "String".
+# This script returns the last run time of ReEnroll script
+# Make sure to set the Extension Attribute Data Type to "Date".
 # https://github.com/AndrewMBarnett/ReEnroll
 # by Andrew Barnett (@andrewmbarnett)
 # 09.16.2024
@@ -13,9 +13,9 @@ folder_path="/Library/Application Support/ReEnroll"
 ReEnrollFile="$folder_path/ReEnroll"
 
 if [ -f "${ReEnrollFile}.plist" ]; then
-    ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" DeviceEnrolledStatus | sed 's/.\{20\}$//' 2> /dev/null)
+    ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" ReEnrollLastRun | sed 's/.\{6\}$//' 2> /dev/null)
     [[ -n "${ReEnrollEnrolledResults}" ]] && echo "<result>${ReEnrollEnrolledResults}</result>"
-    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No last discovery</result>"
+    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No ReEnroll last run time</result>"
 else
     echo "<result>No ReEnroll Property List file</result>"
 fi
