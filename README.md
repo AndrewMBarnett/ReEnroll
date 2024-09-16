@@ -4,13 +4,13 @@ ReEnroll is designed to automate the re-enrollment process of devices into Jamf 
 
 Features
 
-    Redeploy the Jamf Framework silently or with Dialog window to keep the end user informed on progress.
-    Jamf Pro re-enrollment: ReEnroll the device into Jamf Pro using an enrollment invitation.
-    Renew Profiles to re-enroll the device to your Jamf Pro instance.
-    Policy Check: Validates the policy status to ensure successful re-enrollment.
-    Inventory Check: Validates the inventory status to ensure successful re-enrollment and valid device signature, if re-enrolled.
-    LAPS Account Status Check: Integrates with Jamf Pro to validate the local administrator password status (LAPS) and update it if necessary.
-    Automatic Site Assignment: Reassigns devices to the correct site during the enrollment process by site ID.
+    - Redeploy the Jamf Framework silently or with Dialog window to keep the end user informed on progress.
+    - Jamf Pro re-enrollment: ReEnroll the device into Jamf Pro using an enrollment invitation.
+    - Renew Profiles to re-enroll the device to your Jamf Pro instance.
+    - Policy Check: Validates the policy status to ensure successful re-enrollment.
+    - Inventory Check: Validates the inventory status to ensure successful re-enrollment and valid device signature, if re-enrolled.
+    - LAPS Account Status Check: Integrates with Jamf Pro to validate the local administrator password status (LAPS) and update it if necessary.
+    - Automatic Site Assignment: Reassigns devices to the correct site during the enrollment process by site ID.
 
 Prerequisites
 
