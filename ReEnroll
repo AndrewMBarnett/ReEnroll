@@ -1526,6 +1526,7 @@ function inventoryError() {
 
                 0)  ## Process exit code 0 scenario here
                     notice "${loggedInUser} clicked Update Now;"
+                    echo "Update Now" >> $receipt_path
                     infoOut "Checking user admin status to renew profiles"
                         addAdmin
                         sleep 5
@@ -1551,6 +1552,7 @@ function inventoryError() {
 
                 3)  ## Process exit code 2 scenario here
                     notice "${loggedInUser} clicked Not Now;"
+                    echo "Not Now" >> $receipt_path
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold, statustext: Deferring Update, status: nothing"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
@@ -1561,6 +1563,7 @@ function inventoryError() {
 
                 4)  ## Process exit code 4 scenario here
                     notice "${loggedInUser} allowed timer to expire;"
+                    echo "Allowed timer to expire" >> $receipt_path
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
@@ -1570,7 +1573,7 @@ function inventoryError() {
                     ;;
 
                 20) ## Process exit code 20 scenario here
-                    updateScriptLog "${loggedInUser} had Do Not Disturb enabled"
+                    notice "${loggedInUser} had Do Not Disturb enabled"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
@@ -1580,7 +1583,7 @@ function inventoryError() {
                     ;;
 
                 *)  ## Catch all processing
-                    infoOut "Something else happened; Exit code: ${returncode};"
+                    notice "Something else happened; Exit code: ${returncode};"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"

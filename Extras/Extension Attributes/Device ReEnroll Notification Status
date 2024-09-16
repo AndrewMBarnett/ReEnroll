@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# This script returns the ReEnroll notification status
+# Make sure to set the Extension Attribute Data Type to "String".
+# https://github.com/AndrewMBarnett/ReEnroll
+# by Andrew Barnett (@andrewmbarnett)
+# 09.16.2024
+
+ReEnrollFile="/usr/local/reenroll/receipts/reEnrollComputer.txt"
+
+if [ -f "$ReEnrollFile" ]; then
+	ReEnrollNotification=$(sed -n '2p' /usr/local/reenroll/receipts/reEnrollComputer.txt)
+    [[ -n "$ReEnrollNotification" ]] && echo "<result>${ReEnrollNotification}</result>"
+    [[ -z "$ReEnrollNotification" ]] && echo "<result>No ReEnroll Results found.</result>"
+else
+    echo "<result>No ReEnroll file</result>"
+fi
