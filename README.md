@@ -1,5 +1,10 @@
 # ReEnroll
 
+![](https://img.shields.io/github/v/release/AndrewMBarnett/ReEnroll)&nbsp;![](https://img.shields.io/github/downloads/AndrewMBarnett/ReEnroll/latest/total)&nbsp;![](https://img.shields.io/badge/macOS-12.0%2B-success)
+
+![GitHub issues](https://img.shields.io/github/issues-raw/AndrewMBarnett/ReEnroll) ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/AndrewMBarnett/ReEnroll) ![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/AndrewMBarnett/ReEnroll) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed-raw/AndrewMBarnett/ReEnroll)
+
+
 ReEnroll is designed to automate the re-enrollment process of devices into Jamf Pro. It is particularly useful in situations where the Jamf managed local administrator password is not correct, and it needs to be updated in Jamf Pro, or when other re-enrollment scenarios arise, such as updating device inventory or reassigning devices to different sites.
 
 Features
