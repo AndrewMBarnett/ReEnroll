@@ -993,7 +993,7 @@ function findUsersandRemove() {
     # Demote LAPS admin account to be removed
     infoOut "Demoting $lapsAdminAccount account"
 
-sudo dseditgroup -o edit -d $lapsAdminAccount -t user admin
+sudo dseditgroup -o edit -d "$lapsAdminAccount" -t user admin
 
 RESULT=()
 
@@ -1261,7 +1261,7 @@ function jmfrdeploy() {
     redeployResult=$(/usr/bin/curl -H "Authorization: Bearer ${apiBearerToken}" -H "accept: application/json" --progress-bar --fail-with-body "${jssurl}"api/v1/jamf-management-framework/redeploy/"${computerID}" -X POST)
     check_status "$redeployResult"
 
-    if [ $displayReEnrollDialog = "true" ]; then
+    if [ "$displayReEnrollDialog" = "true" ]; then
         if [ "$APIResult" = "Failure" ]; then
             updateDialog "listitem: title: Deploy Jamf Framework, icon: SF=icloud.and.arrow.down.fill,weight=bold, statustext: Error, status: error"
             updateDialog "progresstext: Jamf Management Framework unable to redeploy"
@@ -1303,7 +1303,7 @@ function jmfrdeploy() {
                 updateDialog "progresstext: Clearing failed MDM commands"
                 clearFailedCommands
                     # Checking if display ReEnroll Dialog and 'Redeploy Framework' set to true
-                    if [ $displayReEnrollDialog = "true" ] && [ "$redeployFramework" = "true" ]; then
+                    if [ "$displayReEnrollDialog" = "true" ] && [ "$redeployFramework" = "true" ]; then
                         infoOut "Display ReEnroll Dialog and 'Redeploy Framework' set to true"
                         updateDialog "listitem: title: Gathering Computer Information, icon: SF=pencil.and.list.clipboard,weight=bold, statustext: Complete, status: success"
                         updateDialog "listitem: add, title: Deploy Jamf Framework, icon: SF=icloud.and.arrow.down.fill,weight=bold, statustext: Checking…, status: wait"
@@ -1312,7 +1312,7 @@ function jmfrdeploy() {
                         # Redeploy Jamf management framework is set to true, proceeding with redeploy
                         updateDialog "progresstext: Jamf Management Framework deploying"
                         redeployFramework
-                    elif [ $displayReEnrollDialog = "false" ] && [ "$redeployFramework" = "true" ]; then
+                    elif [ "$displayReEnrollDialog" = "false" ] && [ "$redeployFramework" = "true" ]; then
                         # Redeploy Jamf management framework is set to true, proceeding with redeploy with displayReEnrollDialog set to false
                         infoout "Display ReEnroll Dialog set to false and 'Redeploy Framework' set to true, skipping dialog"
                         # Redeploy Jamf management framework is set to true, proceeding with redeploy
@@ -1498,7 +1498,7 @@ function jamfProfileRenew () {
 function inventoryError() {
 
     # Check is displayReEnrollDialog is true
-    if [ $displayReEnrollDialog = "true" ]; then
+    if [ "$displayReEnrollDialog" = "true" ]; then
         notice "Adding 'Profiles Renew' dialog"
         updateDialog "listitem: add, title: Jamf Update Needed, icon: SF=exclamationmark.icloud.fill,weight=bold, statustext: Waiting …, status: wait"
         updateDialog "listitem: delete, title: ReEnroll in progress …,"
@@ -1901,7 +1901,7 @@ function verifyLAPSCredentials() {
 # Function to check the LAPS account status and handle enrollment
 function checkLAPSAccountStatus() {
   
-  if [ $displayReEnrollDialog = "true" ]; then
+  if [ "$displayReEnrollDialog" = "true" ]; then
     notice "Adding 'LAPS Admin Check' dialog"
     updateDialog "listitem: add, title: LAPS Admin Check, icon: SF=person.crop.circle.badge.clock.fill,weight=bold, statustext: Checking …, status: wait"
     updateDialog "listitem: delete, title: ReEnroll in progress …,"
@@ -1960,7 +1960,7 @@ function checkIn() {
 
     # Validating JSS Connection Status
     jssConnectionStatus
-        if [ $displayReEnrollDialog = "true" ]; then
+        if [ "$displayReEnrollDialog" = "true" ]; then
             notice "Adding 'Jamf Connection Status' dialog"
             updateDialog "listitem: add, title: Jamf Connection Status, icon: SF=icloud.and.arrow.up.fill,weight=bold, statustext: Check 1 of 3, status: wait"
             updateDialog "listitem: delete, title: ReEnroll in progress …,"
