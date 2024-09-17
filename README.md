@@ -25,7 +25,7 @@ Features
 
 Prerequisites
 
-    If using the redeploy Jamf Framework command, you must setup an ReEnroll API account with the following privileges:
+    If you are wanting to use the API calls in the script, you will need to setup a ReEnroll API account with the following privileges:
         - Read Computer Inventory Collection
         - Read Computer Check-In 
         - Update Computers 
@@ -39,4 +39,5 @@ Prerequisites
         - Send Local Admin Password Command
     
     Enrollment Invitation: You will need an enrollment invitation token, which can be generated from Jamf Pro.
+        - (https:/company.jamfcloud.com/enroll?invitation=1542270881__;!!KwNVnq) (Invitation ID in this example would be: 1542270881)
    
