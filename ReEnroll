@@ -5,7 +5,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Script Version
-scriptVersion="1.1"
+scriptVersion="1.2"
 # Script Name
 scriptName="ReEnroll"
 # Temporary inventory log to read
@@ -238,6 +238,28 @@ function quitOut() {
 ####################################################################################################
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Path Related Functions
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+function makePath() {
+    mkdir -p "$(sed 's/\(.*\)\/.*/\1/' <<< $1)"
+    notice "Path made: $1"
+}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Create Folder Path
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+# Create Folder Path
+
+if [[ -d "${folder_path}" ]]; then
+        preFlight "Specified ${folder_path} path exists"
+else [[ ! -d "${folder_path}" ]]
+        preFlight "Created specified folder path"
+        mkdir "${folder_path}"
+fi
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Client-side Logging
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -252,15 +274,6 @@ if [[ ! -f "${scriptLog}" ]]; then
 else
     preFlight "Specified scriptLog exists; writing log entries to it"
 fi
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Path Related Functions
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-function makePath() {
-    mkdir -p "$(sed 's/\(.*\)\/.*/\1/' <<< $1)"
-    notice "Path made: $1"
-}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Validate / Create Temp DialogLog File
@@ -849,21 +862,6 @@ esac
     quitOut "Goodbye!"
     exit 
 
-}
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Create Folder Path
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-# Create Folder Path
-function folderPath() {
-
-    if [[ -d "${folder_path}" ]]; then
-        infoOut "Specified ${folder_path} path exists"
-    else [[ ! -d "${folder_path}" ]]
-        infoOut "Created specified folder path"
-        mkdir "${folder_path}"
-    fi
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
