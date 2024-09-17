@@ -7,6 +7,9 @@
 
 ReEnroll is designed to automate the re-enrollment process of devices into Jamf Pro. It is particularly useful in situations where the Jamf managed local administrator password is not correct, and it needs to be updated in Jamf Pro, or when other re-enrollment scenarios arise, such as updating device inventory or reassigning devices to different sites.
 
+
+<img width="712" alt="ReEnrollDeployFrameworkCheckIn" src="Extras/Images/ReEnrollDeployFrameworkCheckIn.png">
+
 Features
 
     - Redeploy the Jamf Framework silently or with Dialog window to keep the end user informed on progress.
@@ -16,6 +19,9 @@ Features
     - Inventory Check: Validates the inventory status to ensure successful re-enrollment and valid device signature, if re-enrolled.
     - LAPS Account Status Check: Integrates with Jamf Pro to validate the local administrator password status (LAPS) and update it if necessary.
     - Automatic Site Assignment: Reassigns devices to the correct site during the enrollment process by site ID.
+    - Move Computers to a different site after enrollling by site ID.
+    - Delete Specific Accounts: You can target specific user accounts to delete.
+    - Send a Teams or Slack message after the script runs.
 
 Prerequisites
 
