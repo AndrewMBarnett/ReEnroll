@@ -19,7 +19,7 @@ ReEnroll is designed to automate the re-enrollment process of devices into Jamf 
 - Inventory Check: Validates the inventory status to ensure successful re-enrollment and valid device signature, if re-enrolled.
 - LAPS Account Status Check: Integrates with Jamf Pro to validate the local administrator password status (LAPS) and update it if necessary.
 - Automatic Site Assignment: Reassigns devices to the correct site during the enrollment process by site ID.
-- Move Computers to a different site after enrollling by site ID.
+- Move Computers to a different site after enrolling by site ID.
 - Delete Specific Accounts: You can target specific user accounts to delete.
 - Send a Teams or Slack message after the script runs.
 
@@ -41,7 +41,7 @@ If you are wanting to use the API calls in the script, you will need to setup a 
 Enrollment Invitation: You will need an enrollment invitation token, which can be generated from Jamf Pro.
     - (https:/company.jamfcloud.com/enroll?invitation=1542270881__;!!KwNVnq) (Invitation ID in this example would be: 1542270881)
 
-If you use Renew Profiles variable, the device wasn't initially enrolled with preStage enrollment and the device is macOS 14 or higher. The end user will see the Automatice Device            Enrollment window. You will want to verify the computer is in the correct group in your Apple Business/School Manager. 
+If you use Renew Profiles variable, the device wasn't initially enrolled with preStage enrollment and the device is macOS 14 or higher. The end user will see the Automatic Device            Enrollment window. You will want to verify the computer is in the correct group in your Apple Business/School Manager. 
 
 ### Considerations
 
