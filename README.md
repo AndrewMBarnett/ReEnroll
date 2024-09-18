@@ -45,7 +45,7 @@ If you use Renew Profiles variable, the device wasn't initially enrolled with pr
 
 ### Considerations
 
-If you do not have a Jamf managed local administrator account set, this script won't be able to create a new local admin account for the device. If you only setup a local administrator       account using preStage Enrollment, unfortunately this won't be able to fix that. 
+If you do not have a Jamf managed local administrator account set, this script won't be able to create a new local admin account for the device. If you only setup a local administrator       account using PreStage Enrollment, unfortunately this won't be able to fix that. 
 
 If you do decide to create a Jamf managed local administrator account, make sure you do not make the PreStage Enrollment administrator account the same username.
 
