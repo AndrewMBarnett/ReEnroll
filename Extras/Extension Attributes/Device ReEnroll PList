@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# This script returns if the ReEnroll Property List Exists
+# Make sure to set the Extension Attribute Data Type to "Date".
+# https://github.com/AndrewMBarnett/ReEnroll
+# by Andrew Barnett (@andrewmbarnett)
+# 09.20.2024
+
+# Path to ReEnroll folder
+folder_path="/Library/Application Support/ReEnroll"
+
+# ReEnroll property list file
+ReEnrollFile="$folder_path/ReEnroll"
+
+if [ -f "${ReEnrollFile}.plist" ]; then
+     echo "<result>ReEnroll Property List Exists</result>"
+else
+    echo "<result>No ReEnroll Property List file</result>"
+fi
+
+exit 0
