@@ -15,7 +15,7 @@ ReEnrollFile="$folder_path/ReEnroll"
 if [ -f "${ReEnrollFile}.plist" ]; then
     ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" ReEnrollNotificationStatus | sed 's/.\{26\}$//' 2> /dev/null)
     [[ -n "${ReEnrollEnrolledResults}" ]] && echo "<result>${ReEnrollEnrolledResults}</result>"
-    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No last notification status</result>"
+    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No notification status</result>"
 else
     echo "<result>No ReEnroll Property List file</result>"
 fi
