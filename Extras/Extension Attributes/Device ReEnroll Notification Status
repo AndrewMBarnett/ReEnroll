@@ -4,7 +4,7 @@
 # Make sure to set the Extension Attribute Data Type to "String".
 # https://github.com/AndrewMBarnett/ReEnroll
 # by Andrew Barnett (@andrewmbarnett)
-# 09.16.2024
+# 09.20.2024
 
 # Path to ReEnroll folder
 folder_path="/Library/Application Support/ReEnroll"
@@ -15,7 +15,7 @@ ReEnrollFile="$folder_path/ReEnroll"
 if [ -f "${ReEnrollFile}.plist" ]; then
     ReEnrollEnrolledResults=$(defaults read "${ReEnrollFile}" ReEnrollNotificationStatus | sed 's/.\{26\}$//' 2> /dev/null)
     [[ -n "${ReEnrollEnrolledResults}" ]] && echo "<result>${ReEnrollEnrolledResults}</result>"
-    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No last discovery</result>"
+    [[ -z "${ReEnrollEnrolledResults}" ]] && echo "<result>No last notification status</result>"
 else
     echo "<result>No ReEnroll Property List file</result>"
 fi
