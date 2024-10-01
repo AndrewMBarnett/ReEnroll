@@ -1947,7 +1947,7 @@ function checkLAPSAccountStatus() {
     updateDialog "listitem: delete, title: ReEnroll in progress …,"
     updateDialog "progresstext: Checking LAPS Admin Account credentials..."
   else
-    notice "ReEnroll did not call for 'LAPS Admin Check'"
+    notice "ReEnroll did not call for 'LAPS Admin Check' dialog"
   fi
 
   # Loop to retry checking the LAPS account status
@@ -1975,15 +1975,33 @@ function checkLAPSAccountStatus() {
     fi
 
   else
-    #scriptResult+="LAPS account and password could not be validated after 10 attempts"
     updateDialog "listitem: title: LAPS Admin Check, icon: SF=person.crop.circle.fill.badge.xmark,weight=bold, statustext: Invalid Credentials …, status: fail"
     updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.xmark,weight=bold, statustext: Invalid Credentials …, status: fail"
     error "LAPS account and password could not be validated"
     infoOut "Sending Profiles Renew Command"
-    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
-    webhookStatus="ReEnroll with notification"
-    # Sending renew profiles dialog
-    inventoryError
+        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
+        webhookStatus="ReEnroll with notification"
+        # Verifying if we need to send renew profiles
+        case ${renewProfiles} in
+
+            "true" ) # Send profiles renew command
+                infoOut "Profiles Renew set to: ${renewProfiles}"
+                inventoryError
+            ;;
+
+            "failure" ) # Send profiles renew command on failures
+                infoOut "Profiles Renew set to: ${renewProfiles}, profiles renew command will be sent if the Jamf Framework deployment reports failures and the ReEnroll Invitation command fails"
+            ;;
+
+            "false" ) # Don't notify
+                infoOut "Profiles Renew set to: ${renewProfiles}, skipping ..."
+            ;;
+
+            * ) # Catch-all
+                infoOut "Enrollment Invitation set to: ${renewProfiles}, skipping ..."
+                ;;
+
+            esac
   fi
 }
 
@@ -2008,7 +2026,7 @@ function checkIn() {
             updateDialog "listitem: add, title: • Inventory Status, statustext: Pending …"
             updateDialog "progresstext: Checking Jamf Software Server (JSS)"
         else
-            notice "ReEnroll did not call for 'LAPS Admin Check'"
+            notice "ReEnroll did not call for 'LAPS Admin Check' dialog"
         fi
 
     counter=1
@@ -2094,7 +2112,27 @@ function checkIn() {
             error "Jamf Pro Inventory Connection status error"
             updateDialog "listitem: title: • Inventory Status, icon: SF=exclamationmark.icloud.fill, statustext: Connection Error, status: error"
             updateDialog "listitem: title: Jamf Connection Status, icon: SF=icloud.and.arrow.up.fill,weight=bold, statustext: Connection Error, status: error"
-            inventoryError
+                # Verifying if we need to send renew profiles
+                case ${renewProfiles} in
+
+                    "true" ) # Send profiles renew command
+                        infoOut "Profiles Renew set to: ${renewProfiles}"
+                        inventoryError
+                    ;;
+
+                    "failure" ) # Send profiles renew command on failures
+                        infoOut "Profiles Renew set to: ${renewProfiles}, profiles renew command will be sent if the Jamf Framework deployment reports failures and the ReEnroll Invitation command fails"
+                    ;;
+
+                    "false" ) # Don't notify
+                        infoOut "Profiles Renew set to: ${renewProfiles}, skipping ..."
+                    ;;
+
+                    * ) # Catch-all
+                        infoOut "Enrollment Invitation set to: ${renewProfiles}, skipping ..."
+                        ;;
+
+                    esac
         fi
 
         # Verify LAPS credentials needs to be skipped or not
@@ -2110,8 +2148,27 @@ function checkIn() {
         updateDialog "listitem: title: Jamf Connection Status, icon: SF=icloud.and.arrow.up.fill,weight=bold, statustext: Connection Error …, status: error"
         updateDialog "listitem: title: • JSS Connection, icon: SF=exclamationmark.icloud.fill, statustext: Connection Error …, status: error"
         updateDialog "progresstext: No connection could be established"
-        # Sending Inventory error notification and profiles renew
-        inventoryError
+            # Verifying if we need to send renew profiles
+            case ${renewProfiles} in
+
+                "true" ) # Send profiles renew command
+                    infoOut "Profiles Renew set to: ${renewProfiles}"
+                    inventoryError
+                ;;
+
+                "failure" ) # Send profiles renew command on failures
+                    infoOut "Profiles Renew set to: ${renewProfiles}, profiles renew command will be sent if the Jamf Framework deployment reports failures and the ReEnroll Invitation command fails"
+                ;;
+
+                "false" ) # Don't notify
+                    infoOut "Profiles Renew set to: ${renewProfiles}, skipping ..."
+                ;;
+
+                * ) # Catch-all
+                    infoOut "Enrollment Invitation set to: ${renewProfiles}, skipping ..."
+                    ;;
+
+                esac
     fi
 
 }
