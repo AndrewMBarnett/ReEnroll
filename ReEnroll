@@ -325,6 +325,9 @@ else
     preFlight "Specified $tempInventoryLog exists; proceeding …"
 fi
 
+# Get the PID of the current script for caffeinate
+reEnrollPID="$$"
+
 # Create a marker file if it doesn't exist
 function createMarkerFile(){
 
@@ -589,6 +592,10 @@ fi
 
 preFlight "Complete!"
 
+# Caffeinate this script
+infoOut "Caffeinating this script (PID: $reEnrollPID)"
+caffeinate -dimsu -w $reEnrollPID &
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # "ReEnroll" Dialog Settings and Features
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -674,6 +681,17 @@ function dialogExit() {
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Exit the caffeinated script
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+function caffeinateExit() {
+
+    infoOut "De-caffeinate $reEnrollPID..."
+    killProcess "caffeinate"
+
+}
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Quit Script
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -707,8 +725,12 @@ case ${webhookEnabled} in
         ;;
 
 esac
+
+    # Stop `caffeinate` process
+    caffeinateExit
+
     # Update computer inventory after enrollment
-     function updatedComputerInventoryInfo () {
+    function updatedComputerInventoryInfo () {
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # Update Computer Site
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
