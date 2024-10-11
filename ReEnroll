@@ -5,7 +5,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Script Version
-scriptVersion="1.4"
+scriptVersion="1.5"
 # Script Name
 scriptName="ReEnroll"
 # Temporary inventory log to read
