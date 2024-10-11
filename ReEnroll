@@ -299,6 +299,12 @@ function updateDialog() {
     sleep 0.4
 }
 
+case ${debugMode} in
+    "true"      ) infoTextScriptVersion="DEBUG MODE | Dialog: v${dialogVersion} • ${scriptName}: v${scriptVersion}" ;;
+    "verbose"   ) infoTextScriptVersion="VERBOSE DEBUG MODE | Dialog: v${dialogVersion} • ${scriptName}: v${scriptVersion}" ;;
+    "false"     ) infoTextScriptVersion="${scriptVersion}" ;;
+esac
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Validate / Create temp Inventory Log File
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -432,22 +438,37 @@ verifyLastPosition
 # Pre-flight Check: Confirm script is running as root
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+function rootCheck() {
 # Confirm script is running as root
 if [[ $(id -u) -ne 0 ]]; then
     fatal "This script must be run as root; exiting."
+        quitScript "1"
 fi
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Confirm Dock is running / user is at Desktop
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-until pgrep -q -x "Finder" && pgrep -q -x "Dock"; do
+function dockCheck() {
+
+    preFlight "Checking if Finder & Dock are running"
+
+    DockFinderCounter="1"
+
+    until [[ "${DockFinderCounter}" -gt "10" ]] || (pgrep -q -x "Finder" && pgrep -q -x "Dock"); do
     preFlight "Finder & Dock are NOT running; pausing for 1 second"
-    sleep 1
-done
+        sleep 2
+        ((DockFinderCounter++))
 
-preFlight "Finder & Dock are running; proceeding …"
-
+        if [[ "${DockFinderCounter}" -gt "10" ]] || ! pgrep -q -x "Finder" || ! pgrep -q -x "Dock"; then
+            error "Finder or Dock not found or timeout reached; exiting"
+            quitScript 1
+        else
+            preFlight "Finder & Dock are running; proceeding"
+        fi
+    done
+}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Pre-flight Check: Current Logged-in User Function
@@ -624,6 +645,7 @@ dialogReEnroll="$dialogBinary \
 --messagefont size=14 \
 --infobox \"**Computer Name:**  \n\n • $computerName  \n\n **macOS Version:**  \n\n • $osVersionFull\" \
 --progresstext \"$inventoryProgressText\" \
+--infotext \"$infoTextScriptVersion\" \
 --quitkey K \
 --commandfile \"$dialogLog\" "
 
@@ -680,6 +702,37 @@ function dialogExit() {
 
 }
 
+function completeReEnrollDialog() {
+
+    infoOut "Checking if Dialog is running or closed for another prompt"
+
+    if pgrep -x "Dialog" >/dev/null; then
+        infoOut "Dialog is running."
+        infoOut "ReEnroll dialog is still running, proceeding"
+        updateDialog "ontop: enabled"
+        updateDialog "listitem: delete, title: ReEnroll in progress …,"
+        updateDialog "icon: SF=checkmark.circle.fill,weight=bold,colour1=#00ff44,colour2=#075c1e"
+        updateDialog "overlayicon: $overlayicon"
+        updateDialog "progress: 100"
+        updateDialog "progresstext: Done!"
+        infoOut "Elapsed Time: $(printf '%dh:%dm:%ds\n' $((SECONDS/3600)) $((SECONDS%3600/60)) $((SECONDS%60)))"
+        sleep 10
+    else
+        infoOut "Dialog closed at some point. Calling window to show complete"
+        eval "$dialogReEnroll" &
+        infoOut "Complete ReEnroll dialog"
+        updateDialog "icon: SF=checkmark.circle.fill,weight=bold,colour1=#00ff44,colour2=#075c1e"
+        updateDialog "listitem: delete, title: ReEnroll in progress …"
+        updateDialog "listitem: add, title: ReEnroll Complete, icon: $overlayicon, statustext: Complete, status: success"
+        updateDialog "overlayicon: $overlayicon"
+        updateDialog "progress: 100"
+        updateDialog "progresstext: Done!"
+        infoOut "Elapsed Time: $(printf '%dh:%dm:%ds\n' $((SECONDS/3600)) $((SECONDS%3600/60)) $((SECONDS%60)))"
+        sleep 10
+    fi
+
+}
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Exit the caffeinated script
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -729,67 +782,6 @@ esac
     # Stop `caffeinate` process
     caffeinateExit
 
-    # Update computer inventory after enrollment
-    function updatedComputerInventoryInfo () {
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Update Computer Site
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    # Update Computer Site
-    function computerSiteUpdate () {
-
-            infoOut "Computer has an original Site: ($computerSite), site ID: ($computerSiteID)"
-            /usr/bin/curl --request PATCH \
-            --url "${jssurl}api/v1/computers-inventory-detail/$computerID" \
-            --header "Authorization: Bearer $apiBearerToken" \
-            --header 'accept: application/json' \
-            --header 'Content-Type: application/json' \
-            --data "{
-            \"general\": {
-                \"siteId\": \"$computerSiteID\"
-            }
-            }"
-    }
-        # Update Computer Site to new site
-        function newComputerSiteUpdate () {
-
-            infoOut "Computer has an original Site: ($computerSite)"
-            /usr/bin/curl --request PATCH \
-            --url "${jssurl}api/v1/computers-inventory-detail/$computerID" \
-            --header "Authorization: Bearer $apiBearerToken" \
-            --header 'accept: application/json' \
-            --header 'Content-Type: application/json' \
-            --data "{
-            \"general\": {
-                \"siteId\": \"$newComputerSiteID\"
-            }
-            }"
-    }
-    
-        # Verify and update computer site
-        if [ "$updateComputerSite" = "true" ]; then
-            infoOut "Update computer site is set to true, verifying and updating computer Site"
-            getAccessToken
-            checkTokenExpiration
-            computerInventoryInfo
-            if [ ! "$newComputerSiteID" = "" ]; then
-                # Updating computer site
-                newComputerSiteUpdate
-                notice "New Computer Site ID: $newComputerSiteID"
-            elif [ "$computerSiteID" -gt "1" ]; then
-                computerSiteUpdate
-                notice "The computer ($serialNumber) was updated to the original site ($computerSite)."
-            elif [ "$computerSiteID" -lt "0" ]; then
-                # Computer Site ID less than zero, assigned to no site
-                notice "The computer ($serialNumber) Site was set to none."
-            else
-                error "The computer was not updated to the original site"
-            fi
-    else
-        infoOut "Update computer site is set to false, skipping verifying and updating computer Site"
-    fi
-    }
-
     # Invalidate the Bearer Token
     invalidateToken () {
 	responseCode=$(/usr/bin/curl -w "%{http_code}" -H "Authorization: Bearer ${apiBearerToken}" "${jssurl}api/v1/auth/invalidate-token" -X POST -s -o /dev/null)
@@ -816,13 +808,6 @@ esac
     else
         # displayReEnrollDialog was set to false
         notice "No Dialog was displayed, no ReEnroll Dialog to complete"
-    fi
-
-    if [ -z "$client_id" ] || [ -z "$client_secret" ] || [ "$APIAccess" = "Failure" ]; then
-        notice "Client ID and Client Secret not set, skipping computer site update"
-    else
-        # Check computer site information
-        updatedComputerInventoryInfo
     fi
 
     # Invalidate the Bearer Token
@@ -910,13 +895,22 @@ function propertyList() {
         defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
         defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
         defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
+        defaults write $reEnrollConfigFile ReEnrollMethod -string "None"
     else
         notice "ReEnroll configuration already exists, continuing..."
         timestamp="$(date +"%Y-%m-%d %l:%M:%S +0000")"
         defaults write $reEnrollConfigFile ReEnrollVersion -string "$scriptVersion"
         defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
+        defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
+        defaults write $reEnrollConfigFile ReEnrollMethod -string "None"
     fi
 }
+
+# Run initial functions and checks
+propertyList
+rootCheck
+dockCheck
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Functions to pull API information
@@ -983,41 +977,6 @@ function removeAdmin () {
     else
         quitOut "$loggedInUser is not an admin."
     fi
-}
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Find User Accounts and Remove
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-function completeReEnrollDialog() {
-
-    infoOut "Checking if Dialog is running or closed for another prompt"
-
-    if pgrep -x "Dialog" >/dev/null; then
-        infoOut "Dialog is running."
-        infoOut "ReEnroll dialog is still running, proceeding"
-        updateDialog "ontop: enabled"
-        updateDialog "listitem: delete, title: ReEnroll in progress …,"
-        updateDialog "icon: SF=checkmark.circle.fill,weight=bold,colour1=#00ff44,colour2=#075c1e"
-        updateDialog "overlayicon: $overlayicon"
-        updateDialog "progress: 100"
-        updateDialog "progresstext: Done!"
-        infoOut "Elapsed Time: $(printf '%dh:%dm:%ds\n' $((SECONDS/3600)) $((SECONDS%3600/60)) $((SECONDS%60)))"
-        sleep 10
-    else
-        infoOut "Dialog closed at some point. Calling window to show complete"
-        eval "$dialogReEnroll" &
-        infoOut "Complete ReEnroll dialog"
-        updateDialog "icon: SF=checkmark.circle.fill,weight=bold,colour1=#00ff44,colour2=#075c1e"
-        updateDialog "listitem: delete, title: ReEnroll in progress …"
-        updateDialog "listitem: add, title: ReEnroll Complete, icon: $overlayicon, statustext: Complete, status: success"
-        updateDialog "overlayicon: $overlayicon"
-        updateDialog "progress: 100"
-        updateDialog "progresstext: Done!"
-        infoOut "Elapsed Time: $(printf '%dh:%dm:%ds\n' $((SECONDS/3600)) $((SECONDS%3600/60)) $((SECONDS%60)))"
-        sleep 10
-    fi
-
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1311,12 +1270,16 @@ function jmfrdeploy() {
     fi
     }
 
+    clearFailedCommandsResult=$(/usr/bin/curl -H "Authorization: Bearer ${apiBearerToken}" "${jssurl}JSSResource/commandflush/computers/id/${computerID}/status/Failed" -X DELETE)
+    check_status "$clearFailedCommandsResult"
+
     # Redeploy Jamf binary
     function redeployFramework () {
     # Redeploy Jamf binary
     notice "Redeploy Jamf binary"
     redeployResult=$(/usr/bin/curl -H "Authorization: Bearer ${apiBearerToken}" -H "accept: application/json" --progress-bar --fail-with-body "${jssurl}"api/v1/jamf-management-framework/redeploy/"${computerID}" -X POST)
     check_status "$redeployResult"
+    defaults write $reEnrollConfigFile ReEnrollMethod -string "Redeploy Jamf Framework" 
 
     if [ "$displayReEnrollDialog" = "true" ]; then
         if [ "$APIResult" = "Failure" ]; then
@@ -1371,7 +1334,7 @@ function jmfrdeploy() {
                         redeployFramework
                     elif [ "$displayReEnrollDialog" = "false" ] && [ "$redeployFramework" = "true" ]; then
                         # Redeploy Jamf management framework is set to true, proceeding with redeploy with displayReEnrollDialog set to false
-                        infoout "Display ReEnroll Dialog set to false and 'Redeploy Framework' set to true, skipping dialog"
+                        infoOut "Display ReEnroll Dialog set to false and 'Redeploy Framework' set to true, skipping dialog"
                         # Redeploy Jamf management framework is set to true, proceeding with redeploy
                         redeployFramework
                     else
@@ -1565,6 +1528,7 @@ function inventoryError() {
     fi
     notice "Sending Profiles Renew Command, deleting LAPS account, and sending notification"
     defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
+    defaults write $reEnrollConfigFile ReEnrollMethod -string "Renewing Enrollment"
     webhookStatus="ReEnroll with notification"
     reEnrollMethod="Notification for Renewing Enrollment"
         if [[ "${osMajorVersion}" -ge 12 ]] && [[ -e "/Library/Application Support/Dialog/Dialog.app" ]]; then
@@ -1642,7 +1606,7 @@ function inventoryError() {
 
                 *)  ## Catch all processing
                     notice "Something else happened; Exit code: ${returncode};"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Error: Something else happened"
+                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Errror: Something else happened"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
@@ -1927,6 +1891,7 @@ function reEnrollInvitation() {
         /usr/local/bin/jamf enroll -invitation "$enrollmentInvitation" -noRecon -noPolicy
         updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Invitation Sent, status: success"
         updateDialog "progresstext: Enrollment Invitation Sent"
+        defaults write $reEnrollConfigFile ReEnrollMethod -string "Enrollment Invitation"
 
         # Set webhook statuses
         reEnrollMethod="Sending Silent Enrollment Invitation"
@@ -2195,6 +2160,67 @@ function checkIn() {
 
 }
 
+function updatedComputerInventoryInfo () {
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Update Computer Site
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    # Update Computer Site
+    function computerSiteUpdate () {
+
+            infoOut "Computer has an original Site: ($computerSite), site ID: ($computerSiteID)"
+            /usr/bin/curl --request PATCH \
+            -sf "${jssurl}api/v1/computers-inventory-detail/$computerID" \
+            --header "Authorization: Bearer $apiBearerToken" \
+            --header 'accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "{
+            \"general\": {
+                \"siteId\": \"$computerSiteID\"
+            }
+            }"
+    }
+        # Update Computer Site to new site
+        function newComputerSiteUpdate () {
+
+            infoOut "Computer has an original Site: ($computerSite)"
+            /usr/bin/curl --request PATCH \
+            -sf "${jssurl}api/v1/computers-inventory-detail/$computerID" \
+            --header "Authorization: Bearer $apiBearerToken" \
+            --header 'accept: application/json' \
+            --header 'Content-Type: application/json' \
+            --data "{
+            \"general\": {
+                \"siteId\": \"$newComputerSiteID\"
+            }
+            }"
+    }
+    
+        # Verify and update computer site
+        if [ "$updateComputerSite" = "true" ]; then
+            infoOut "Update computer site is set to true, verifying and updating computer Site"
+            getAccessToken
+            checkTokenExpiration
+            apiResponse
+            computerIDLookup
+            computerInventoryInfo
+            if [ ! "$newComputerSiteID" = "" ]; then
+                # Updating computer site
+                newComputerSiteUpdate
+                notice "New Computer Site ID: $newComputerSiteID"
+            elif [ "$computerSiteID" -gt "1" ]; then
+                computerSiteUpdate
+                notice "The computer ($serialNumber) was updated to the original site ($computerSite)."
+            elif [ "$computerSiteID" -lt "0" ]; then
+                # Computer Site ID less than zero, assigned to no site
+                notice "The computer ($serialNumber) Site was set to none."
+            else
+                error "The computer was not updated to the original site"
+            fi
+    else
+        infoOut "Update computer site is set to false, skipping verifying and updating computer Site"
+    fi
+    }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Webhook Message (Microsoft Teams or Slack) 
@@ -2350,12 +2376,6 @@ else
     notice "Skipping ReEnroll Dialog"
 fi
 
-# Create Folder Paths if they don't exist
-folderPath
-
-# Create Property List if it doesn't exist
-propertyList
-
 # Find Users and Remove
 findUsersandRemove
 
@@ -2440,6 +2460,13 @@ if [ "$skipLAPSAdminCheck" = "false" ]; then
 else
     # skipLAPSAdminCheck was set to true
     notice "Skipping LAPS admin check command"
+fi
+
+if [ -z "$client_id" ] || [ -z "$client_secret" ] || [ "$APIAccess" = "Failure" ]; then
+    notice "Client ID and Client Secret not set, skipping computer site update"
+else
+    # Check computer site information
+    updatedComputerInventoryInfo
 fi
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
