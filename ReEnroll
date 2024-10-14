@@ -5,7 +5,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Script Version
-scriptVersion="1.5"
+scriptVersion="1.6"
 # Script Name
 scriptName="ReEnroll"
 # Temporary inventory log to read
@@ -14,7 +14,7 @@ tempInventoryLog="/var/log/tempInventory.log"
 folder_path="/Library/Application Support/ReEnroll"
 # Log file for script
 scriptLog="$folder_path/ReEnroll.log"
-# Receipt Path for Extension attribute
+# Property List Path for Extension attribute
 reEnrollConfigFile="$folder_path/ReEnroll.plist"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -148,7 +148,7 @@ osBuild=$( sw_vers -buildVersion )
 osMajorVersion=$( echo "${osVersion}" | awk -F '.' '{print $1}' )
 modelName=$( /usr/libexec/PlistBuddy -c 'Print :0:_items:0:machine_name' /dev/stdin <<< "$(system_profiler -xml SPHardwareDataType)" )
 
-echo "model name is $modelName"
+#echo "model name is $modelName"
 
 # Report RSR sub-version if applicable
 if [[ -n $osVersionExtra ]] && [[ "${osMajorVersion}" -ge 13 ]]; then osVersion="${osVersion} ${osVersionExtra}"; fi
@@ -886,24 +886,23 @@ function propertyList() {
     fi
 
     # PLIST creation and population
-    infoOut "Checking for $reEnrollConfigFile"
+    infoOut "Checking for "$reEnrollConfigFile""
 
-    if [[ ! -f $reEnrollConfigFile ]]; then
-        notice "ReEnroll configuration profile does not exist, creating now..."
+    if [[ ! -f "$reEnrollConfigFile" ]]; then
+        infoOut "ReEnroll configuration profile does not exist, creating now..."
         timestamp="$(date +"%Y-%m-%d %l:%M:%S +0000")"
-        defaults write $reEnrollConfigFile ReEnrollVersion -string "$scriptVersion"
-        defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
-        defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
-        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
-        defaults write $reEnrollConfigFile ReEnrollMethod -string "None"
+        defaults write "$reEnrollConfigFile" ReEnrollVersion "$scriptVersion"
+        defaults write "$reEnrollConfigFile" ReEnrollLastRun -date "$timestamp"
+        defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
+        defaults write "$reEnrollConfigFile" ReEnrollNotificationStatus "No Notification"
+        defaults write "$reEnrollConfigFile" ReEnrollMethod "None"
+        defaults write "$reEnrollConfigFile" ComputerSiteID "None"
+        defaults write "$reEnrollConfigFile" ComputerSite "-1"
     else
-        notice "ReEnroll configuration already exists, continuing..."
-        timestamp="$(date +"%Y-%m-%d %l:%M:%S +0000")"
-        defaults write $reEnrollConfigFile ReEnrollVersion -string "$scriptVersion"
-        defaults write $reEnrollConfigFile ReEnrollLastRun -date "$timestamp"
-        defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
-        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
-        defaults write $reEnrollConfigFile ReEnrollMethod -string "None"
+        infoOut "ReEnroll configuration already exists, continuing..."
+        timestamp="$(date +"%Y-%m-%d %H:%M:%S +0000")"
+        defaults write "$reEnrollConfigFile" ReEnrollVersion "$scriptVersion"
+        defaults write "$reEnrollConfigFile" ReEnrollLastRun -date "$timestamp"
     fi
 }
 
@@ -1058,7 +1057,7 @@ while read -r user; do
 function enrollDeviceReceipt() {
 
     infoOut "Adding device enrolled receipt"
-    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus -string "Enrolled Device"
+    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Enrolled Device"
 
 
 }
@@ -1228,7 +1227,11 @@ function jmfrdeploy() {
     computerSiteID=$(echo "${generalComputerInfo}" | xpath -q -e "/computer/general/site/id/text()")
     
     infoOut "Computer Site ID: $computerSiteID"
+    infoOut "Adding computer site ID to ReEnroll Config File"
+    defaults write "$reEnrollConfigFile" ComputerSiteID "$computerSiteID"
     infoOut "Computer Site Name: $computerSite"
+    infoOut "Adding computer site to ReEnroll Config File"
+    defaults write "$reEnrollConfigFile" ComputerSite "$computerSite"
     infoOut "Computer Model: $computerModel"
 
     if [[ "$debugMode" = "verbose" ]]; then
@@ -1279,7 +1282,7 @@ function jmfrdeploy() {
     notice "Redeploy Jamf binary"
     redeployResult=$(/usr/bin/curl -H "Authorization: Bearer ${apiBearerToken}" -H "accept: application/json" --progress-bar --fail-with-body "${jssurl}"api/v1/jamf-management-framework/redeploy/"${computerID}" -X POST)
     check_status "$redeployResult"
-    defaults write $reEnrollConfigFile ReEnrollMethod -string "Redeploy Jamf Framework" 
+    defaults write "$reEnrollConfigFile" ReEnrollMethod "Redeploy Jamf Framework" 
 
     if [ "$displayReEnrollDialog" = "true" ]; then
         if [ "$APIResult" = "Failure" ]; then
@@ -1527,8 +1530,8 @@ function inventoryError() {
         notice "ReEnroll did not call for 'Profiles Renew' dialog"
     fi
     notice "Sending Profiles Renew Command, deleting LAPS account, and sending notification"
-    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
-    defaults write $reEnrollConfigFile ReEnrollMethod -string "Renewing Enrollment"
+    defaults write "$reEnrollConfigFile" ReEnrollNotificationStatus "ReEnroll with notification"
+    defaults write "$reEnrollConfigFile" ReEnrollMethod "Renewing Enrollment"
     webhookStatus="ReEnroll with notification"
     reEnrollMethod="Notification for Renewing Enrollment"
         if [[ "${osMajorVersion}" -ge 12 ]] && [[ -e "/Library/Application Support/Dialog/Dialog.app" ]]; then
@@ -1547,7 +1550,7 @@ function inventoryError() {
 
                 0)  ## Process exit code 0 scenario here
                     notice "${loggedInUser} clicked Update Now;"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Update Now"
+                    defaults write "$reEnrollConfigFile" ReEnrollRenewProfilesDialog "Update Now"
                     infoOut "Checking user admin status to renew profiles"
                         addAdmin
                         sleep 5
@@ -1573,52 +1576,52 @@ function inventoryError() {
 
                 3)  ## Process exit code 2 scenario here
                     notice "${loggedInUser} clicked Not Now;"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Not Now"
+                    defaults write "$reEnrollConfigFile" ReEnrollRenewProfilesDialog "Not Now"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold, statustext: Deferring Update, status: nothing"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer Chose: Not Now"
-                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+                    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 4)  ## Process exit code 4 scenario here
                     notice "${loggedInUser} allowed timer to expire;"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Allowed timer to expire"
+                    defaults write "$reEnrollConfigFile" ReEnrollRenewProfilesDialog "Allowed timer to expire"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer allowed timer to expire"
-                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+                    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 20) ## Process exit code 20 scenario here
                     notice "${loggedInUser} had Do Not Disturb enabled"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Do Not Disturb enabled"
+                    defaults write "$reEnrollConfigFile" ReEnrollRenewProfilesDialog "Do Not Disturb enabled"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Customer had Do Not Disturb enabled"
-                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+                    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
                     quitScript "0"
                     ;;
 
                 *)  ## Catch all processing
                     notice "Something else happened; Exit code: ${returncode};"
-                    defaults write $reEnrollConfigFile ReEnrollRenewProfilesDialog -string "Errror: Something else happened"
+                    defaults write "$reEnrollConfigFile" ReEnrollRenewProfilesDialog "Errror: Something else happened"
                     updateDialog "listitem: title: Jamf Update Needed, icon: SF=arrow.clockwise.icloud.fill,weight=bold,"
                     infoOut "Removing enrollment receipt"
                     webhookStatus="ReEnroll with notification"
                     reEnrollMethod="Something went wrong, policy will run at next execution"
-                    defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+                    defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
                     quitScript "${returncode}"
                     ;;
 
             esac
         else
             infoOut "Sending osascript notification for updating profiles"
-            defaults write $reEnrollConfigFile DeviceEnrolledStatus -string "Not Enrolled"
+            defaults write "$reEnrollConfigFile" DeviceEnrolledStatus "Not Enrolled"
             infoOut "Sending Profiles Renew Enrollment Command"
             triggerEnrollment
             webhookStatus="ReEnroll with notification (S/N ${serialNumber})"
@@ -1891,7 +1894,7 @@ function reEnrollInvitation() {
         /usr/local/bin/jamf enroll -invitation "$enrollmentInvitation" -noRecon -noPolicy
         updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Invitation Sent, status: success"
         updateDialog "progresstext: Enrollment Invitation Sent"
-        defaults write $reEnrollConfigFile ReEnrollMethod -string "Enrollment Invitation"
+        defaults write "$reEnrollConfigFile" ReEnrollMethod "Enrollment Invitation"
 
         # Set webhook statuses
         reEnrollMethod="Sending Silent Enrollment Invitation"
@@ -1944,7 +1947,7 @@ function checkLAPSAccountStatus() {
     infoOut "LAPS account and password are valid"
     updateDialog "listitem: title: LAPS Admin Check, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Valid Credentials, status: success"
     updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.checkmark,weight=bold, statustext: Invitation Sent, status: success"
-    defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "No Notification"
+    defaults write "$reEnrollConfigFile" ReEnrollNotificationStatus "No Notification"
     webhookStatus="ReEnroll without notification"
     
     # Only update reEnrollMethod if it hasn't been set already
@@ -1953,12 +1956,12 @@ function checkLAPSAccountStatus() {
     fi
 
     if [ $skipLaunchDaemon = "false" ]; then
-        infoOut "$skipLaunchDaemon is set to false, sending Recon Launch Daemon"
+        infoOut "Skip Launch Daemon is set to false, sending Recon Launch Daemon"
         reconLaunchDaemon
-        quitScript "0"
+        #quitScript "0"
     else 
-        infoOut "$skipLaunchDaemon is set to true, skipping sending Recon Launch Daemon"
-        quitScript "0"
+        infoOut "Skip Launch Daemon is set to true, skipping sending Recon Launch Daemon"
+        #quitScript "0"
     fi
 
   else
@@ -1966,7 +1969,7 @@ function checkLAPSAccountStatus() {
     updateDialog "listitem: title: Sending Enrollment Invitation, icon: SF=person.crop.circle.fill.badge.xmark,weight=bold, statustext: Invalid Credentials …, status: fail"
     error "LAPS account and password could not be validated"
     infoOut "Sending Profiles Renew Command"
-        defaults write $reEnrollConfigFile ReEnrollNotificationStatus -string "ReEnroll with notification"
+    defaults write "$reEnrollConfigFile" ReEnrollNotificationStatus "ReEnroll with notification"
         webhookStatus="ReEnroll with notification"
         # Verifying if we need to send renew profiles
         case ${renewProfiles} in
@@ -2168,7 +2171,8 @@ function updatedComputerInventoryInfo () {
     # Update Computer Site
     function computerSiteUpdate () {
 
-            infoOut "Computer has an original Site: ($computerSite), site ID: ($computerSiteID)"
+        # Update Computer Site to original site
+            infoOut "Computer has an original Site: ($originalComputerSite), site ID: ($originalComputerSiteID)"
             /usr/bin/curl --request PATCH \
             -sf "${jssurl}api/v1/computers-inventory-detail/$computerID" \
             --header "Authorization: Bearer $apiBearerToken" \
@@ -2195,7 +2199,8 @@ function updatedComputerInventoryInfo () {
             }
             }"
     }
-    
+        originalComputerSite=$(defaults read "$reEnrollConfigFile" ComputerSite)
+        originalComputerSiteID=$(defaults read "$reEnrollConfigFile" ComputerSiteID)
         # Verify and update computer site
         if [ "$updateComputerSite" = "true" ]; then
             infoOut "Update computer site is set to true, verifying and updating computer Site"
@@ -2208,10 +2213,10 @@ function updatedComputerInventoryInfo () {
                 # Updating computer site
                 newComputerSiteUpdate
                 notice "New Computer Site ID: $newComputerSiteID"
-            elif [ "$computerSiteID" -gt "1" ]; then
+            elif [ "$originalComputerSiteID" -gt "1" ]; then
                 computerSiteUpdate
-                notice "The computer ($serialNumber) was updated to the original site ($computerSite)."
-            elif [ "$computerSiteID" -lt "0" ]; then
+                notice "The computer ($serialNumber) was updated to the original site ($originalComputerSite)."
+            elif [ "$originalComputerSiteID" -lt "0" ]; then
                 # Computer Site ID less than zero, assigned to no site
                 notice "The computer ($serialNumber) Site was set to none."
             else
@@ -2220,6 +2225,9 @@ function updatedComputerInventoryInfo () {
     else
         infoOut "Update computer site is set to false, skipping verifying and updating computer Site"
     fi
+
+    # Quiting script
+    quitScript "0"
     }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -2444,7 +2452,7 @@ if [ "$skipCheckIN" = "false" ]; then
     checkIn
     if [ "$redeployFramework" = "false" ] || [ "$sendEnrollmentInvitation" = "false" ] || [ "$renewProfiles" = "false" ] || [ "$skipLAPSAdminCheck" = "false" ]; then
         notice "Only check-in command was sent, exiting script"
-        quitScript "0"
+        #quitScript "0"
     else
         notice "All commands were sent"
     fi
@@ -2464,6 +2472,7 @@ fi
 
 if [ -z "$client_id" ] || [ -z "$client_secret" ] || [ "$APIAccess" = "Failure" ]; then
     notice "Client ID and Client Secret not set, skipping computer site update"
+    quitScript "0"
 else
     # Check computer site information
     updatedComputerInventoryInfo
