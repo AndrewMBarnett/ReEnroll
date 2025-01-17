@@ -5,7 +5,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 # Script Version
-scriptVersion="1.6"
+scriptVersion="1.6.1"
 # Script Name
 scriptName="ReEnroll"
 # Temporary inventory log to read
@@ -2173,7 +2173,7 @@ function updatedComputerInventoryInfo () {
 
         # Update Computer Site to original site
             infoOut "Computer has an original Site: ($originalComputerSite), site ID: ($originalComputerSiteID)"
-            /usr/bin/curl --request PATCH \
+            /usr/bin/curl  --silent --output /dev/null --request PATCH \
             -sf "${jssurl}api/v1/computers-inventory-detail/$computerID" \
             --header "Authorization: Bearer $apiBearerToken" \
             --header 'accept: application/json' \
@@ -2188,7 +2188,7 @@ function updatedComputerInventoryInfo () {
         function newComputerSiteUpdate () {
 
             infoOut "Computer has an original Site: ($computerSite)"
-            /usr/bin/curl --request PATCH \
+            /usr/bin/curl  --silent --output /dev/null --request PATCH \
             -sf "${jssurl}api/v1/computers-inventory-detail/$computerID" \
             --header "Authorization: Bearer $apiBearerToken" \
             --header 'accept: application/json' \
