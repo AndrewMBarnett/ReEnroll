@@ -2276,7 +2276,7 @@ fi
 				},
 				{
 					"type": "mrkdwn",
-					"text": ">*Current User:*\n>'"$loggedInUserFirstname $loggedInUserLastname (NetID: $loggedInUser)"'"
+					"text": ">*Current User:*\n>'"$loggedInUserFirstname $loggedInUserLastname (User ID: $loggedInUser)"'"
 				},
 				{
 					"type": "mrkdwn",
@@ -2345,7 +2345,7 @@ fi
 			"value": "'"$webhookComputerModel"'"
 		}, {
 			"name": "Current User:",
-			"value": "'"$loggedInUserFirstname $loggedInUserLastname (NetID: $loggedInUser)"'"
+			"value": "'"$loggedInUserFirstname $loggedInUserLastname (User ID: $loggedInUser)"'"
 		}, {
 			"name": "Notification Status:",
 			"value": "'"$webhookStatus"'"
