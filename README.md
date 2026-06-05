@@ -40,7 +40,7 @@ If you are wanting to use the API calls in the script, you will need to setup a 
 - Send Local Admin Password Command
 
 Enrollment Invitation: You will need an enrollment invitation token, which can be generated from Jamf Pro.
-    - (https:/company.jamfcloud.com/enroll?invitation=1542270881__;!!KwNVnq) (Invitation ID in this example would be: 1542270881)
+    - (https://company.jamfcloud.com/enroll?invitation=1542270881__;!!KwNVnq) (Invitation ID in this example would be: 1542270881)
 
 If you use Renew Profiles variable, the device wasn't initially enrolled with preStage enrollment and the device is macOS 14 or higher. The end user will see the Automatic Device            Enrollment window. You will want to verify the computer is in the correct group in your Apple Business/School Manager. 
 
